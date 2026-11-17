@@ -1,62 +1,58 @@
-# Naleya SIMRS — UI Prototype
+<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
 
-Prototype frontend statis untuk dashboard pelayanan dan pendaftaran pasien. Dibangun dengan HTML, CSS, JavaScript, Bootstrap 5, dan Bootstrap Icons.
+<p align="center">
+<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
+<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
+<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
+<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
+</p>
 
-## Menjalankan project
+## About Laravel
 
-Dari folder project, jalankan server lokal:
+Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+
+- [Simple, fast routing engine](https://laravel.com/docs/routing).
+- [Powerful dependency injection container](https://laravel.com/docs/container).
+- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
+- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
+- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
+- [Robust background job processing](https://laravel.com/docs/queues).
+- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+
+Laravel is accessible, powerful, and provides tools required for large, robust applications.
+
+## Learning Laravel
+
+Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+
+In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+
+You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+
+## Agentic Development
+
+Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
 
 ```bash
-python3 -m http.server 8000
+composer require laravel/boost --dev
+
+php artisan boost:install
 ```
 
-Buka `http://localhost:8000/`. Halaman utama akan mengarahkan ke dashboard.
+Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
 
-## Struktur folder
+## Contributing
 
-```text
-.
-├── assets/
-│   ├── img/                     # Gambar aplikasi
-│   └── vendor/                  # Library pihak ketiga yang disimpan lokal
-│       ├── bootstrap/
-│       └── fullcalendar/
-├── components/
-│   └── layout/                  # Sumber markup sidebar dan topbar
-├── pages/
-│   ├── operations/              # Halaman internal petugas
-│   │   ├── dashboard.html
-│   │   ├── registrations.html
-│   │   ├── patients.html
-│   │   └── registration-detail.html
-│   └── public/                  # Halaman publik dan autentikasi
-│       ├── online-registration.html
-│       └── login.html
-├── scripts/
-│   ├── app.js                   # Interaksi umum dan tabel pendaftaran
-│   └── pages/                   # Interaksi khusus halaman
-├── styles/
-│   ├── app.css                  # Token dan komponen visual bersama
-│   └── pages/                   # Style khusus halaman
-├── components/
-└── index.html                   # Entry point dashboard
-```
+Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
 
-## Halaman
+## Code of Conduct
 
-| Halaman            | File                                        |
-| ------------------ | ------------------------------------------- |
-| Dashboard          | `pages/operations/dashboard.html`           |
-| Daftar pendaftaran | `pages/operations/registrations.html`       |
-| Data pasien        | `pages/operations/patients.html`            |
-| Detail pendaftaran | `pages/operations/registration-detail.html` |
-| Daftar online      | `pages/public/online-registration.html`     |
-| Login              | `pages/public/login.html`                   |
+In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
 
-## Panduan kode
+## Security Vulnerabilities
 
-- Gunakan Inter untuk tipografi dan `styles/app.css` untuk token, komponen layout, feedback, form, dan tabel bersama.
-- Gunakan nama file berdasarkan fungsinya. Interaksi khusus halaman berada di `scripts/pages/`, styling khusus halaman di `styles/pages/`.
-- `components/layout/` berisi sumber markup sidebar dan topbar. Karena project statis, markup layout saat ini masih disalin di HTML. Saat memakai template engine, pindahkan menjadi partial/include.
-- Bootstrap disimpan lokal di `assets/vendor/`. Bootstrap Icons dan Inter dimuat melalui CDN.
-- Data pada halaman dan aksi simpan, hapus, check-in, ubah jadwal, serta logout masih berupa demo frontend; sambungkan ke API/backend sebelum penggunaan nyata.
+If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+
+## License
+
+The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
