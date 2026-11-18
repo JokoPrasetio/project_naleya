@@ -71,7 +71,7 @@
         <span class="text-muted">—</span>
       @else
         <div class="d-flex gap-1">
-          <button class="btn btn-sm btn-outline-secondary" type="button" data-edit-examination="{{ $node->id }}">Ubah</button>
+          <a class="btn btn-sm btn-outline-secondary" href="{{ route('master.examinations.edit', $node) }}">Ubah</a>
           <form method="POST" action="{{ route('master.examinations.destroy', $node) }}" onsubmit="return confirm('Hapus node ini?')">
             @csrf
             @method('DELETE')

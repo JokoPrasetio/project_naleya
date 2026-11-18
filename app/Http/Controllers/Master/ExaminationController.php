@@ -32,47 +32,7 @@ class ExaminationController extends Controller
             $this->totalPrice($examination, $childrenByParent, $totals);
         }
 
-        $parents = $examinations->filter(fn (Examination $node): bool => in_array($node->node_type, ['examination', 'sub_header'], true) || $node->header_type === 'service')->sortBy('name');
-        $services = $examinations->filter(fn (Examination $node): bool => $node->header_type === 'service')->sortBy('name');
-        $modalNodes = $examinations->mapWithKeys(fn (Examination $node): array => [$node->id => [
-            'updateUrl' => route('master.examinations.update', $node),
-            'name' => $node->name,
-            'code' => $node->code,
-            'node_type' => $node->node_type,
-            'header_type' => $node->header_type,
-            'parent_id' => $node->parent_id,
-            'sort_order' => $node->sort_order,
-            'is_active' => $node->is_active,
-            'is_orderable' => $node->is_orderable,
-            'result_type' => $node->result_type,
-            'price' => $node->price !== null ? (float) $node->price : null,
-            'unit' => $node->unit,
-            'method' => $node->method,
-            'reference_min' => $node->normalValues->firstWhere('normal_value_type', 'minimum')?->value,
-            'reference_max' => $node->normalValues->firstWhere('normal_value_type', 'maximum')?->value,
-            'normal_options' => $node->normalValues->where('normal_value_type', 'choice')->pluck('value')->implode("\n"),
-            'abnormal_options' => $node->abnormalValues->where('type', 'choice')->pluck('value')->implode("\n"),
-            'normal_values' => $node->normalValues->map(fn ($value): array => [
-                'classification' => $value->classification,
-                'normal_value_type' => $value->normal_value_type,
-                'value' => $value->value,
-                'unit' => $value->unit,
-            ])->values()->all(),
-            'abnormal_values' => $node->abnormalValues->map(fn ($value): array => [
-                'classification' => $value->classification,
-                'operator' => $value->operator,
-                'type' => $value->type,
-                'value' => $value->value,
-                'unit' => $value->unit,
-                'reference_value' => $value->reference_value,
-                'conclusion' => $value->conclusion,
-                'suggestion' => $value->suggestion,
-                'summary' => $value->summary,
-            ])->values()->all(),
-            'service_ids' => $node->packageServices->pluck('id')->all(),
-        ]])->all();
-
-        return view('master.examinations.index', compact('activeType', 'childrenByParent', 'roots', 'tabRoots', 'totals', 'parents', 'services', 'modalNodes'));
+        return view('master.examinations.index', compact('activeType', 'childrenByParent', 'roots', 'tabRoots', 'totals'));
     }
 
     public function create(): View

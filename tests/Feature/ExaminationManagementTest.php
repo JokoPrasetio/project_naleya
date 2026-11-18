@@ -172,17 +172,20 @@ class ExaminationManagementTest extends TestCase
         $this->actingAs($this->userWithPermissions(['master.examinations.manage']));
 
         $this->get(route('master.examinations.index'))
-            ->assertOk()->assertSee('id="examinationModal"', false)
-            ->assertSee('data-create-examination', false)
-            ->assertSee('data-edit-examination=', false)
-            ->assertSee('Nilai normal')->assertSee('Nilai abnormal')
+            ->assertOk()
+            ->assertSee(route('master.examinations.create'), false)
+            ->assertSee(route('master.examinations.edit', $examination), false)
+            ->assertDontSee('id="examinationModal"', false);
+        $this->get(route('master.examinations.create'))
+            ->assertOk()
             ->assertSee('id="examinationFormTabs"', false)
             ->assertSee('id="normalValuesRows"', false)
             ->assertSee('id="abnormalValuesRows"', false)
             ->assertSee('Tambah nilai normal')->assertSee('Tambah nilai abnormal')
-            ->assertSee('Klasifikasi');
-        $this->get(route('master.examinations.create'))->assertOk()->assertSee('Jenis header');
-        $this->get(route('master.examinations.edit', $examination))->assertOk()->assertSee('Glukosa')->assertSee('reference_min');
+            ->assertSee('Tambah banyak')->assertSee('Klasifikasi');
+        $this->get(route('master.examinations.edit', $examination))
+            ->assertOk()->assertSee('Glukosa')->assertSee('normal_values', false)
+            ->assertDontSee('Tambah banyak');
         $this->get(route('master.examinations.edit', $package))->assertOk()->assertSee('Darah Lengkap');
 
         $this->put(route('master.examinations.update', $examination), $this->payload([
