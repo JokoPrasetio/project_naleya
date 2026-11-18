@@ -10,11 +10,13 @@
               tampilan yang lebih ringkas.
             </p>
             <div class="d-flex flex-wrap gap-2 mt-4">
+              @can('registrations.manage')
               <a
                 class="btn btn-light btn-sm px-3 py-2 rounded-3"
-                href="../public/online-registration.html"
+                href="{{ route('registrations.create') }}"
                 ><i class="bi bi-plus-lg me-2"></i>Daftar Pasien</a
               >
+              @endcan
               <button class="btn btn-outline-light btn-sm px-3 py-2 rounded-3">
                 <i class="bi bi-download me-2"></i>Unduh Laporan
               </button>
@@ -79,11 +81,13 @@
                     Daftar pasien yang masuk hari ini
                   </p>
                 </div>
+                @can('registrations.view')
                 <a
                   class="btn btn-sm btn-outline-secondary rounded-3"
-                  href="../public/online-registration.html"
+                  href="{{ route('registrations.index') }}"
                   >Lihat semua</a
                 >
+                @endcan
               </div>
               <div class="table-responsive">
                 <table class="table table-modern align-middle">
@@ -169,7 +173,7 @@
               <div class="d-grid gap-2 mt-3">
                 <a
                   class="quick-action"
-                  href="../public/online-registration.html"
+                  href="{{ auth()->user()->can('registrations.manage') ? route('registrations.create') : route('registrations.online') }}"
                   ><span class="metric-icon"
                     ><i class="bi bi-person-plus"></i></span
                   ><span

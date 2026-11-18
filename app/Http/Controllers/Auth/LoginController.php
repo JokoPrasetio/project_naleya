@@ -41,11 +41,13 @@ class LoginController extends Controller
 
         $destination = Auth::user()->can('dashboard.view')
             ? route('dashboard')
-            : (Auth::user()->can('access.users.view')
-                ? route('access.users.index')
-                : (Auth::user()->can('access.roles.view')
-                    ? route('access.roles.index')
-                    : route('dashboard')));
+            : (Auth::user()->can('master.examinations.view')
+                ? route('master.examinations.index')
+                : (Auth::user()->can('access.users.view')
+                    ? route('access.users.index')
+                    : (Auth::user()->can('access.roles.view')
+                        ? route('access.roles.index')
+                        : route('dashboard'))));
 
         return redirect()->intended($destination);
     }

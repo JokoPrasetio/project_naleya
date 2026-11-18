@@ -1,6 +1,6 @@
 <aside class="app-sidebar" id="appSidebar">
       <div class="sidebar-head">
-        <a class="brand" href="{{ auth()->user()->can('dashboard.view') ? route('dashboard') : (auth()->user()->can('access.users.view') ? route('access.users.index') : route('access.roles.index')) }}">
+        <a class="brand" href="{{ auth()->user()->can('dashboard.view') ? route('dashboard') : (auth()->user()->can('master.examinations.view') ? route('master.examinations.index') : (auth()->user()->can('access.users.view') ? route('access.users.index') : route('access.roles.index'))) }}">
           <span class="brand-mark"><i class="bi bi-flower1 fs-5"></i></span>
           <span
             ><span class="brand-title d-block">Dashboard</span

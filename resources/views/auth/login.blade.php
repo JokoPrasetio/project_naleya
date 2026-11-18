@@ -64,6 +64,7 @@
             Masuk <i class="bi bi-arrow-right" aria-hidden="true"></i>
           </button>
         </form>
+        <p class="text-center mt-3 mb-0"><a href="{{ route('registrations.online') }}">Daftar online sebagai pasien</a></p>
       </div>
       <p class="login-card-footer">&copy; {{ date('Y') }} Healtech.</p>
     </section>

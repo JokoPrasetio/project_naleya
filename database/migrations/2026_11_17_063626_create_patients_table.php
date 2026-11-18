@@ -13,10 +13,11 @@ return new class extends Migration
     {
         Schema::create('patients', function (Blueprint $table) {
             $table->id();
-            $table->string('nik');
-            $table->string('no_rm');
+            $table->string('nik', 16)->unique();
+            $table->string('no_rm')->unique();
             $table->string('nama');
-            $table->string('email');
+            $table->string('email')->nullable();
+            $table->string('no_telepon', 30)->nullable();
             $table->date('tgl_lahir');
             $table->string('jenis_kelamin');
             $table->string('gol_darah')->nullable();
@@ -30,8 +31,9 @@ return new class extends Migration
             $table->string('kontak_darurat_telp')->nullable();
             $table->string('kontak_darurat_nama')->nullable();
             $table->string('no_bpjs')->nullable();
-            $table->string('no_bpjs')->nullable();
-            $table->string('no_bpjs')->nullable();
+            $table->string('no_asuransi_lain')->nullable();
+            $table->string('nama_asuransi')->nullable();
+            $table->string('ihs_id')->nullable();
 
             $table->timestamps();
         });
