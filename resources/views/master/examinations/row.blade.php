@@ -4,7 +4,11 @@
     'sub_header' => 'Sub Header',
     default => 'Pemeriksaan',
   };
-  $range = $node->result_type === 'number' ? $node->referenceRanges->first() : null;
+  $referenceMin = $node->result_type === 'number' ? $node->normalValues->firstWhere('normal_value_type', 'minimum')?->value : null;
+  $referenceMax = $node->result_type === 'number' ? $node->normalValues->firstWhere('normal_value_type', 'maximum')?->value : null;
+  $classifications = $node->normalValues->pluck('classification')
+    ->merge($node->abnormalValues->pluck('classification'))
+    ->filter()->unique()->values();
   $children = $node->header_type === 'package'
     ? $node->packageServices
     : $childrenByParent->get((string) $node->id, collect());
@@ -26,22 +30,25 @@
   <td>{{ $node->code ?: '—' }}</td>
   <td>{{ match ($node->result_type) { 'number' => 'Angka', 'choice' => 'Pilihan', 'text' => 'Teks', default => '—' } }}</td>
   <td>
-    @if ($node->result_type === 'number')
-      @if ($range)
-        @if ($range->min_value !== null && $range->max_value !== null)
-          {{ $range->min_value }}–{{ $range->max_value }} {{ $node->unit }}
-        @elseif ($range->min_value !== null)
-          ≥ {{ $range->min_value }} {{ $node->unit }}
+    @if ($classifications->isNotEmpty())
+      <span class="d-block">{{ $classifications->count() }} klasifikasi</span>
+      <span class="text-muted small">{{ $classifications->take(3)->implode(', ') }}@if ($classifications->count() > 3) …@endif</span>
+    @elseif ($node->result_type === 'number')
+      @if ($referenceMin !== null || $referenceMax !== null)
+        @if ($referenceMin !== null && $referenceMax !== null)
+          {{ $referenceMin }}–{{ $referenceMax }} {{ $node->unit }}
+        @elseif ($referenceMin !== null)
+          ≥ {{ $referenceMin }} {{ $node->unit }}
         @else
-          ≤ {{ $range->max_value }} {{ $node->unit }}
+          ≤ {{ $referenceMax }} {{ $node->unit }}
         @endif
       @else
         <span class="text-muted">Belum diatur</span>
       @endif
     @elseif ($node->result_type === 'choice')
       @php
-        $normalOptions = $node->resultOptions->where('is_normal', true)->pluck('label')->implode(', ');
-        $abnormalOptions = $node->resultOptions->where('is_normal', false)->pluck('label')->implode(', ');
+        $normalOptions = $node->normalValues->where('normal_value_type', 'choice')->pluck('value')->implode(', ');
+        $abnormalOptions = $node->abnormalValues->where('type', 'choice')->pluck('value')->implode(', ');
       @endphp
       @if ($normalOptions)<span class="d-block">Normal: {{ $normalOptions }}</span>@endif
       @if ($abnormalOptions)<span class="d-block">Abnormal: {{ $abnormalOptions }}</span>@endif
@@ -64,7 +71,7 @@
         <span class="text-muted">—</span>
       @else
         <div class="d-flex gap-1">
-          <a class="btn btn-sm btn-outline-secondary" href="{{ route('master.examinations.edit', $node) }}">Ubah</a>
+          <button class="btn btn-sm btn-outline-secondary" type="button" data-edit-examination="{{ $node->id }}">Ubah</button>
           <form method="POST" action="{{ route('master.examinations.destroy', $node) }}" onsubmit="return confirm('Hapus node ini?')">
             @csrf
             @method('DELETE')

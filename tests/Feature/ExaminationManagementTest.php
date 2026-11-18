@@ -111,8 +111,11 @@ class ExaminationManagementTest extends TestCase
         ]))->assertRedirect(route('master.examinations.index'));
 
         $this->assertSame('30000.00', $examination->price);
-        $this->assertDatabaseHas('examination_reference_ranges', [
-            'examination_id' => $examination->id, 'min_value' => 70, 'max_value' => 100,
+        $this->assertDatabaseHas('examination_normal_values', [
+            'examination_id' => $examination->id, 'normal_value_type' => 'minimum', 'value' => 70,
+        ]);
+        $this->assertDatabaseHas('examination_normal_values', [
+            'examination_id' => $examination->id, 'normal_value_type' => 'maximum', 'value' => 100,
         ]);
         $this->assertDatabaseHas('package_services', ['service_id' => $service->id]);
         $this->assertDatabaseCount('examinations', 3);
@@ -151,7 +154,8 @@ class ExaminationManagementTest extends TestCase
         ]);
         $this->get(route('master.examinations.index', ['type' => 'service']))
             ->assertOk()->assertSee('Sub Header')->assertSee('Sub Bagian')
-            ->assertDontSee('Posisi Salah')->assertDontSee('Jenis Lama');
+            ->assertDontSee('Posisi Salah');
+        $this->assertDatabaseMissing('examinations', ['name' => 'Jenis Lama']);
     }
 
     public function test_manager_can_open_forms_and_update_reference_price_and_package_membership(): void
@@ -159,11 +163,24 @@ class ExaminationManagementTest extends TestCase
         $firstService = Examination::factory()->service()->create(['name' => 'Kimia Klinik']);
         $secondService = Examination::factory()->service()->create(['name' => 'Darah Lengkap']);
         $examination = Examination::factory()->create(['name' => 'Glukosa', 'parent_id' => $firstService->id]);
-        $examination->referenceRanges()->create(['min_value' => 70, 'max_value' => 100]);
+        $examination->normalValues()->createMany([
+            ['normal_value_type' => 'minimum', 'value' => 70, 'sort_order' => 0],
+            ['normal_value_type' => 'maximum', 'value' => 100, 'sort_order' => 1],
+        ]);
         $package = Examination::factory()->package()->create(['name' => 'Paket MCU']);
         $package->packageServices()->attach($firstService->id);
         $this->actingAs($this->userWithPermissions(['master.examinations.manage']));
 
+        $this->get(route('master.examinations.index'))
+            ->assertOk()->assertSee('id="examinationModal"', false)
+            ->assertSee('data-create-examination', false)
+            ->assertSee('data-edit-examination=', false)
+            ->assertSee('Nilai normal')->assertSee('Nilai abnormal')
+            ->assertSee('id="examinationFormTabs"', false)
+            ->assertSee('id="normalValuesRows"', false)
+            ->assertSee('id="abnormalValuesRows"', false)
+            ->assertSee('Tambah nilai normal')->assertSee('Tambah nilai abnormal')
+            ->assertSee('Klasifikasi');
         $this->get(route('master.examinations.create'))->assertOk()->assertSee('Jenis header');
         $this->get(route('master.examinations.edit', $examination))->assertOk()->assertSee('Glukosa')->assertSee('reference_min');
         $this->get(route('master.examinations.edit', $package))->assertOk()->assertSee('Darah Lengkap');
@@ -179,10 +196,159 @@ class ExaminationManagementTest extends TestCase
         ]))->assertRedirect(route('master.examinations.index'));
 
         $this->assertSame('45000.00', $examination->fresh()->price);
-        $this->assertDatabaseHas('examination_reference_ranges', [
-            'examination_id' => $examination->id, 'min_value' => 80, 'max_value' => 110,
+        $this->assertDatabaseHas('examination_normal_values', [
+            'examination_id' => $examination->id, 'normal_value_type' => 'minimum', 'value' => 80,
+        ]);
+        $this->assertDatabaseHas('examination_normal_values', [
+            'examination_id' => $examination->id, 'normal_value_type' => 'maximum', 'value' => 110,
         ]);
         $this->assertSame(2, $package->fresh()->packageServices()->count());
+    }
+
+    public function test_manager_can_add_multiple_examinations_with_individual_prices(): void
+    {
+        $service = Examination::factory()->service()->create();
+        $this->actingAs($this->userWithPermissions(['master.examinations.manage']));
+
+        $this->post(route('master.examinations.store'), $this->payload([
+            'name' => 'Glukosa', 'code' => 'GLU', 'node_type' => 'examination',
+            'parent_id' => $service->id, 'is_orderable' => '1', 'result_type' => 'number',
+            'price' => '30000', 'sort_order' => '4',
+            'additional' => [
+                [
+                    'name' => 'Asam Urat', 'code' => 'UA', 'is_orderable' => '1',
+                    'price' => '35000', 'result_type' => 'number', 'method' => 'Enzimatik',
+                    'unit' => 'mg/dL', 'is_active' => '1', 'matrix_values_present' => '1',
+                    'normal_values' => [
+                        ['classification' => 'Dewasa', 'normal_value_type' => 'Range', 'value' => '3-7', 'unit' => 'mg/dL'],
+                    ],
+                    'abnormal_values' => [],
+                ],
+                [
+                    'name' => 'Kolesterol', 'code' => 'CHOL', 'is_orderable' => '0',
+                    'price' => null, 'result_type' => 'choice', 'method' => null,
+                    'unit' => null, 'is_active' => '1', 'matrix_values_present' => '1',
+                    'normal_values' => [
+                        ['classification' => 'Dewasa', 'normal_value_type' => 'Pilihan', 'value' => 'Normal', 'unit' => null],
+                    ],
+                    'abnormal_values' => [
+                        [
+                            'classification' => 'Dewasa', 'operator' => '==', 'type' => 'Pilihan',
+                            'value' => 'Tinggi', 'unit' => null, 'reference_value' => 'Normal',
+                            'conclusion' => null, 'suggestion' => null, 'summary' => null,
+                        ],
+                    ],
+                ],
+            ],
+        ]))->assertRedirect(route('master.examinations.index'));
+
+        $this->assertDatabaseHas('examinations', ['name' => 'Glukosa', 'code' => 'GLU', 'sort_order' => 4, 'parent_id' => $service->id]);
+        $this->assertDatabaseHas('examinations', ['name' => 'Asam Urat', 'code' => 'UA', 'sort_order' => 5, 'is_orderable' => true, 'price' => 35000]);
+        $this->assertDatabaseHas('examinations', ['name' => 'Kolesterol', 'code' => 'CHOL', 'sort_order' => 6, 'is_orderable' => false, 'price' => null]);
+        $asamUrat = Examination::query()->where('code', 'UA')->firstOrFail();
+        $kolesterol = Examination::query()->where('code', 'CHOL')->firstOrFail();
+        $this->assertDatabaseHas('examination_normal_values', ['examination_id' => $asamUrat->id, 'classification' => 'Dewasa', 'normal_value_type' => 'Range', 'value' => '3-7']);
+        $this->assertDatabaseHas('examination_normal_values', ['examination_id' => $kolesterol->id, 'classification' => 'Dewasa', 'normal_value_type' => 'Pilihan', 'value' => 'Normal']);
+        $this->assertDatabaseHas('examination_abnormal_values', ['examination_id' => $kolesterol->id, 'classification' => 'Dewasa', 'type' => 'Pilihan', 'value' => 'Tinggi']);
+        $this->assertDatabaseCount('examinations', 4);
+    }
+
+    public function test_manager_can_save_and_replace_multiple_classified_normal_and_abnormal_values(): void
+    {
+        $service = Examination::factory()->service()->create();
+        $this->actingAs($this->userWithPermissions(['master.examinations.manage']));
+
+        $this->post(route('master.examinations.store'), $this->payload([
+            'name' => 'Hemoglobin', 'node_type' => 'examination', 'header_type' => null,
+            'parent_id' => $service->id, 'is_orderable' => '0', 'result_type' => 'number',
+            'matrix_values_present' => '1',
+            'normal_values' => [
+                ['classification' => '1-2 Bulan', 'normal_value_type' => 'Notes', 'value' => '10-14', 'unit' => 'g/dL'],
+                ['classification' => 'Perempuan', 'normal_value_type' => 'Range', 'value' => '12-16', 'unit' => 'g/dL'],
+            ],
+            'abnormal_values' => [
+                [
+                    'classification' => '1-2 Bulan', 'operator' => '<', 'type' => 'Angka',
+                    'value' => '10', 'unit' => 'g/dL', 'reference_value' => '10-14',
+                    'conclusion' => 'Rendah', 'suggestion' => 'Evaluasi', 'summary' => 'Di bawah normal',
+                ],
+                [
+                    'classification' => 'Perempuan', 'operator' => '>', 'type' => 'Angka',
+                    'value' => '16', 'unit' => 'g/dL', 'reference_value' => '12-16',
+                    'conclusion' => 'Tinggi', 'suggestion' => null, 'summary' => null,
+                ],
+            ],
+        ]))->assertRedirect(route('master.examinations.index'));
+        $examination = Examination::query()->where('name', 'Hemoglobin')->firstOrFail();
+
+        $this->assertDatabaseHas('examination_normal_values', [
+            'examination_id' => $examination->id, 'classification' => '1-2 Bulan',
+            'normal_value_type' => 'Notes', 'value' => '10-14', 'unit' => 'g/dL',
+        ]);
+        $this->assertDatabaseHas('examination_abnormal_values', [
+            'examination_id' => $examination->id, 'classification' => 'Perempuan',
+            'operator' => '>', 'type' => 'Angka', 'value' => '16', 'reference_value' => '12-16',
+        ]);
+        $this->assertSame(2, $examination->normalValues()->count());
+        $this->assertSame(2, $examination->abnormalValues()->count());
+
+        $this->put(route('master.examinations.update', $examination), $this->payload([
+            'name' => 'Hemoglobin', 'node_type' => 'examination', 'header_type' => null,
+            'parent_id' => $service->id, 'is_orderable' => '0', 'result_type' => 'number',
+            'matrix_values_present' => '1',
+            'normal_values' => [
+                ['classification' => 'Laki-Laki', 'normal_value_type' => 'Range', 'value' => '13-17', 'unit' => 'g/dL'],
+            ],
+            'abnormal_values' => [
+                [
+                    'classification' => 'Laki-Laki', 'operator' => '<', 'type' => 'Angka',
+                    'value' => '13', 'unit' => 'g/dL', 'reference_value' => '13-17',
+                    'conclusion' => null, 'suggestion' => null, 'summary' => null,
+                ],
+            ],
+        ]))->assertRedirect(route('master.examinations.index'));
+
+        $this->assertDatabaseMissing('examination_normal_values', [
+            'examination_id' => $examination->id, 'classification' => '1-2 Bulan',
+        ]);
+        $this->assertDatabaseHas('examination_normal_values', [
+            'examination_id' => $examination->id, 'classification' => 'Laki-Laki', 'value' => '13-17',
+        ]);
+        $this->assertDatabaseHas('examination_abnormal_values', [
+            'examination_id' => $examination->id, 'classification' => 'Laki-Laki', 'value' => '13',
+        ]);
+        $this->assertSame(1, $examination->normalValues()->count());
+        $this->assertSame(1, $examination->abnormalValues()->count());
+    }
+
+    public function test_duplicate_code_in_batch_rejects_all_new_examinations(): void
+    {
+        $this->actingAs($this->userWithPermissions(['master.examinations.manage']));
+
+        $this->post(route('master.examinations.store'), $this->payload([
+            'code' => 'GLU',
+            'additional' => [['name' => 'Glukosa', 'code' => 'glu', 'is_active' => '1']],
+        ]))->assertSessionHasErrors('additional');
+
+        $this->assertDatabaseCount('examinations', 0);
+    }
+
+    public function test_priced_additional_examination_requires_its_own_price(): void
+    {
+        $service = Examination::factory()->service()->create();
+        $this->actingAs($this->userWithPermissions(['master.examinations.manage']));
+
+        $this->post(route('master.examinations.store'), $this->payload([
+            'name' => 'Glukosa', 'node_type' => 'examination', 'parent_id' => $service->id,
+            'is_orderable' => '0', 'result_type' => 'number',
+            'additional' => [[
+                'name' => 'Asam Urat', 'code' => 'UA',
+                'is_orderable' => '1', 'price' => null, 'result_type' => 'number',
+                'is_active' => '1',
+            ]],
+        ]))->assertSessionHasErrors('additional.0.price');
+
+        $this->assertDatabaseCount('examinations', 1);
     }
 
     public function test_choice_options_are_saved_and_duplicate_values_are_rejected(): void
@@ -197,8 +363,11 @@ class ExaminationManagementTest extends TestCase
 
         $this->post(route('master.examinations.store'), $payload)->assertRedirect(route('master.examinations.index'));
         $examination = Examination::query()->where('name', 'Protein Urine')->firstOrFail();
-        $this->assertDatabaseHas('examination_result_options', [
-            'examination_id' => $examination->id, 'value' => 'Negatif', 'is_normal' => 1,
+        $this->assertDatabaseHas('examination_normal_values', [
+            'examination_id' => $examination->id, 'value' => 'Negatif', 'normal_value_type' => 'choice',
+        ]);
+        $this->assertDatabaseHas('examination_abnormal_values', [
+            'examination_id' => $examination->id, 'value' => 'Positif', 'type' => 'choice',
         ]);
 
         $this->post(route('master.examinations.store'), array_replace($payload, ['abnormal_options' => 'Negatif']))
@@ -222,7 +391,7 @@ class ExaminationManagementTest extends TestCase
         $this->assertModelExists($service);
     }
 
-    public function test_orderable_child_cannot_be_added_under_orderable_examination(): void
+    public function test_result_parameter_can_have_a_price_under_a_priced_examination(): void
     {
         $service = Examination::factory()->service()->create();
         $parent = Examination::factory()->create(['parent_id' => $service->id]);
@@ -232,9 +401,13 @@ class ExaminationManagementTest extends TestCase
             'name' => 'Parameter', 'node_type' => 'examination', 'header_type' => null,
             'parent_id' => $parent->id, 'is_orderable' => '1', 'result_type' => 'number',
             'price' => '10000', 'reference_min' => '1',
-        ]))->assertSessionHasErrors('is_orderable');
+        ]))->assertRedirect(route('master.examinations.index'));
 
-        $this->assertDatabaseCount('examinations', 2);
+        $this->assertDatabaseHas('examinations', [
+            'name' => 'Parameter', 'parent_id' => $parent->id,
+            'is_orderable' => true, 'price' => 10000,
+        ]);
+        $this->assertDatabaseCount('examinations', 3);
     }
 
     public function test_active_package_requires_a_service_with_an_orderable_examination(): void
@@ -263,7 +436,8 @@ class ExaminationManagementTest extends TestCase
             ->assertOk()->assertSee('Paket MCU')->assertSee('Rp65.000');
         $this->assertDatabaseCount('examinations', 9);
         $this->assertDatabaseCount('package_services', 1);
-        $this->assertDatabaseCount('examination_reference_ranges', 0);
+        $this->assertDatabaseCount('examination_normal_values', 0);
+        $this->assertDatabaseCount('examination_abnormal_values', 0);
         $this->assertDatabaseHas('examinations', [
             'code' => 'DEMO-HEMATOLOGI', 'node_type' => 'sub_header', 'header_type' => null,
         ]);
@@ -281,6 +455,6 @@ class ExaminationManagementTest extends TestCase
             ]))->assertRedirect(route('master.examinations.index'));
 
         $this->assertDatabaseHas('examinations', ['name' => 'Glukosa', 'price' => 30000]);
-        $this->assertDatabaseCount('examination_reference_ranges', 0);
+        $this->assertDatabaseCount('examination_normal_values', 0);
     }
 }

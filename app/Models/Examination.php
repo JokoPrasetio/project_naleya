@@ -37,13 +37,13 @@ class Examination extends Model
             ->withPivot('sort_order')->withTimestamps()->orderByPivot('sort_order');
     }
 
-    public function referenceRanges(): HasMany
+    public function normalValues(): HasMany
     {
-        return $this->hasMany(ExaminationReferenceRange::class);
+        return $this->hasMany(ExaminationNormalValue::class)->orderBy('sort_order');
     }
 
-    public function resultOptions(): HasMany
+    public function abnormalValues(): HasMany
     {
-        return $this->hasMany(ExaminationResultOption::class)->orderBy('sort_order');
+        return $this->hasMany(ExaminationAbnormalValue::class)->orderBy('sort_order');
     }
 }

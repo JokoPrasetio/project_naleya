@@ -17,7 +17,7 @@ class ExaminationController extends Controller
 {
     public function index(Request $request): View
     {
-        $examinations = Examination::query()->with(['packageServices', 'referenceRanges', 'resultOptions'])
+        $examinations = Examination::query()->with(['packageServices', 'normalValues', 'abnormalValues'])
             ->orderBy('sort_order')->orderBy('name')->get();
         $childrenByParent = $examinations->groupBy(fn (Examination $node): string => (string) ($node->parent_id ?? 'root'));
         $roots = $childrenByParent->get('root', collect())
@@ -32,7 +32,47 @@ class ExaminationController extends Controller
             $this->totalPrice($examination, $childrenByParent, $totals);
         }
 
-        return view('master.examinations.index', compact('activeType', 'childrenByParent', 'roots', 'tabRoots', 'totals'));
+        $parents = $examinations->filter(fn (Examination $node): bool => in_array($node->node_type, ['examination', 'sub_header'], true) || $node->header_type === 'service')->sortBy('name');
+        $services = $examinations->filter(fn (Examination $node): bool => $node->header_type === 'service')->sortBy('name');
+        $modalNodes = $examinations->mapWithKeys(fn (Examination $node): array => [$node->id => [
+            'updateUrl' => route('master.examinations.update', $node),
+            'name' => $node->name,
+            'code' => $node->code,
+            'node_type' => $node->node_type,
+            'header_type' => $node->header_type,
+            'parent_id' => $node->parent_id,
+            'sort_order' => $node->sort_order,
+            'is_active' => $node->is_active,
+            'is_orderable' => $node->is_orderable,
+            'result_type' => $node->result_type,
+            'price' => $node->price !== null ? (float) $node->price : null,
+            'unit' => $node->unit,
+            'method' => $node->method,
+            'reference_min' => $node->normalValues->firstWhere('normal_value_type', 'minimum')?->value,
+            'reference_max' => $node->normalValues->firstWhere('normal_value_type', 'maximum')?->value,
+            'normal_options' => $node->normalValues->where('normal_value_type', 'choice')->pluck('value')->implode("\n"),
+            'abnormal_options' => $node->abnormalValues->where('type', 'choice')->pluck('value')->implode("\n"),
+            'normal_values' => $node->normalValues->map(fn ($value): array => [
+                'classification' => $value->classification,
+                'normal_value_type' => $value->normal_value_type,
+                'value' => $value->value,
+                'unit' => $value->unit,
+            ])->values()->all(),
+            'abnormal_values' => $node->abnormalValues->map(fn ($value): array => [
+                'classification' => $value->classification,
+                'operator' => $value->operator,
+                'type' => $value->type,
+                'value' => $value->value,
+                'unit' => $value->unit,
+                'reference_value' => $value->reference_value,
+                'conclusion' => $value->conclusion,
+                'suggestion' => $value->suggestion,
+                'summary' => $value->summary,
+            ])->values()->all(),
+            'service_ids' => $node->packageServices->pluck('id')->all(),
+        ]])->all();
+
+        return view('master.examinations.index', compact('activeType', 'childrenByParent', 'roots', 'tabRoots', 'totals', 'parents', 'services', 'modalNodes'));
     }
 
     public function create(): View
@@ -42,16 +82,25 @@ class ExaminationController extends Controller
 
     public function edit(Examination $examination): View
     {
-        $examination->load(['packageServices', 'referenceRanges', 'resultOptions']);
+        $examination->load(['packageServices', 'normalValues', 'abnormalValues']);
 
         return $this->form($examination);
     }
 
     public function store(SaveExaminationRequest $request): RedirectResponse
     {
-        DB::transaction(function () use ($request): void {
-            $examination = Examination::create($this->attributes($request->validated()));
-            $this->saveRelated($examination, $request->validated());
+        $data = $request->validated();
+        DB::transaction(function () use ($data): void {
+            $items = [$data, ...array_map(
+                fn (array $item): array => $this->mergeAdditionalItem($data, $item),
+                $data['additional'] ?? [],
+            )];
+            foreach ($items as $index => $item) {
+                $item['sort_order'] = $data['sort_order'] + $index;
+                $attributes = $this->attributes($item);
+                $examination = Examination::create($attributes);
+                $this->saveRelated($examination, $item);
+            }
         });
 
         return redirect()->route('master.examinations.index')->with('success', 'Master pemeriksaan berhasil ditambahkan.');
@@ -130,18 +179,53 @@ class ExaminationController extends Controller
         }
         $examination->packageServices()->sync($services);
 
-        $examination->referenceRanges()->delete();
-        $examination->resultOptions()->delete();
+        $examination->normalValues()->delete();
+        $examination->abnormalValues()->delete();
         if ($examination->node_type !== 'examination') {
+            return;
+        }
+
+        if (filter_var($data['matrix_values_present'] ?? false, FILTER_VALIDATE_BOOL)) {
+            $normalValues = collect($data['normal_values'] ?? [])->map(fn (array $value, int $index): array => [
+                'classification' => $value['classification'],
+                'normal_value_type' => $value['normal_value_type'],
+                'value' => $value['value'] ?? null,
+                'unit' => $value['unit'] ?? $examination->unit,
+                'sort_order' => $index,
+            ])->all();
+            $abnormalValues = collect($data['abnormal_values'] ?? [])->map(fn (array $value, int $index): array => [
+                'classification' => $value['classification'],
+                'operator' => $value['operator'] ?? null,
+                'type' => $value['type'],
+                'value' => $value['value'] ?? null,
+                'unit' => $value['unit'] ?? $examination->unit,
+                'reference_value' => $value['reference_value'] ?? null,
+                'conclusion' => $value['conclusion'] ?? null,
+                'suggestion' => $value['suggestion'] ?? null,
+                'summary' => $value['summary'] ?? null,
+                'sort_order' => $index,
+            ])->all();
+
+            $examination->normalValues()->createMany($normalValues);
+            $examination->abnormalValues()->createMany($abnormalValues);
+
             return;
         }
 
         if ($examination->result_type === 'number'
             && (isset($data['reference_min']) || isset($data['reference_max']))) {
-            $examination->referenceRanges()->create([
-                'min_value' => $data['reference_min'] ?? null,
-                'max_value' => $data['reference_max'] ?? null,
-            ]);
+            $normalValues = [];
+            foreach (['minimum' => $data['reference_min'] ?? null, 'maximum' => $data['reference_max'] ?? null] as $type => $value) {
+                if ($value !== null) {
+                    $normalValues[] = [
+                        'normal_value_type' => $type,
+                        'value' => $value,
+                        'unit' => $examination->unit,
+                        'sort_order' => $type === 'minimum' ? 0 : 1,
+                    ];
+                }
+            }
+            $examination->normalValues()->createMany($normalValues);
         }
         if ($examination->result_type === 'choice') {
             $normal = $this->optionLines($data['normal_options'] ?? '');
@@ -153,10 +237,16 @@ class ExaminationController extends Controller
             if (count($all) !== count(array_unique(array_map(Str::lower(...), $all)))) {
                 throw ValidationException::withMessages(['normal_options' => 'Pilihan hasil tidak boleh berulang.']);
             }
-            foreach ($all as $index => $value) {
-                $examination->resultOptions()->create([
-                    'value' => $value, 'label' => $value,
-                    'is_normal' => $index < count($normal), 'sort_order' => $index,
+            foreach ($normal as $index => $value) {
+                $examination->normalValues()->create([
+                    'normal_value_type' => 'choice', 'value' => $value,
+                    'unit' => $examination->unit, 'sort_order' => $index,
+                ]);
+            }
+            foreach ($abnormal as $index => $value) {
+                $examination->abnormalValues()->create([
+                    'type' => 'choice', 'value' => $value,
+                    'unit' => $examination->unit, 'sort_order' => $index,
                 ]);
             }
         }
@@ -166,6 +256,22 @@ class ExaminationController extends Controller
     private function optionLines(string $text): array
     {
         return array_values(array_filter(array_map(trim(...), preg_split('/\R/u', $text) ?: []), fn (string $value): bool => $value !== ''));
+    }
+
+    /**
+     * @param  array<string, mixed>  $defaults
+     * @param  array<string, mixed>  $item
+     * @return array<string, mixed>
+     */
+    private function mergeAdditionalItem(array $defaults, array $item): array
+    {
+        $merged = array_replace($defaults, $item);
+        if (filter_var($item['matrix_values_present'] ?? false, FILTER_VALIDATE_BOOL)) {
+            $merged['normal_values'] = $item['normal_values'] ?? [];
+            $merged['abnormal_values'] = $item['abnormal_values'] ?? [];
+        }
+
+        return $merged;
     }
 
     /** @param Collection<string, Collection<int, Examination>> $childrenByParent

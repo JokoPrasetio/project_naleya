@@ -9,9 +9,10 @@
     $resultType = old('result_type', $examination?->result_type ?? 'number');
     $isOrderable = old('is_orderable', $examination?->is_orderable ?? false);
     $selectedServices = old('service_ids', $examination?->packageServices->pluck('id')->all() ?? []);
-    $range = $examination?->referenceRanges->first();
-    $normalOptions = $examination?->resultOptions->where('is_normal', true)->pluck('label')->implode("\n") ?? '';
-    $abnormalOptions = $examination?->resultOptions->where('is_normal', false)->pluck('label')->implode("\n") ?? '';
+    $referenceMin = $examination?->normalValues->firstWhere('normal_value_type', 'minimum')?->value;
+    $referenceMax = $examination?->normalValues->firstWhere('normal_value_type', 'maximum')?->value;
+    $normalOptions = $examination?->normalValues->where('normal_value_type', 'choice')->pluck('value')->implode("\n") ?? '';
+    $abnormalOptions = $examination?->abnormalValues->where('type', 'choice')->pluck('value')->implode("\n") ?? '';
   @endphp
   <div class="page-heading">
     <div>
@@ -114,16 +115,16 @@
               @error('result_type')<div class="invalid-feedback">{{ $message }}</div>@enderror
             </div>
             <div class="col-md-4">
-              <label class="form-label" for="isOrderable">Dapat dipesan</label>
+              <label class="form-label" for="isOrderable">Memiliki harga?</label>
               <select class="form-select @error('is_orderable') is-invalid @enderror" id="isOrderable" name="is_orderable">
-                <option value="1" @selected($isOrderable)>Ya, memiliki harga</option>
-                <option value="0" @selected(! $isOrderable)>Tidak, parameter hasil</option>
+                <option value="1" @selected($isOrderable)>Ya</option>
+                <option value="0" @selected(! $isOrderable)>Tidak</option>
               </select>
               @error('is_orderable')<div class="invalid-feedback">{{ $message }}</div>@enderror
             </div>
             <div class="col-md-4" data-field="price">
               <label class="form-label" for="price">Harga (Rp)</label>
-              <input class="form-control @error('price') is-invalid @enderror" id="price" name="price" type="number" min="0" step="0.01" value="{{ old('price', $examination?->price) }}">
+              <input class="form-control @error('price') is-invalid @enderror" id="price" name="price" type="text" inputmode="numeric" data-currency value="{{ old('price', $examination?->price !== null ? (float) $examination->price : null) }}" placeholder="0">
               @error('price')<div class="invalid-feedback">{{ $message }}</div>@enderror
             </div>
             <div class="col-md-6">
@@ -138,12 +139,12 @@
               <div class="row g-3">
                 <div class="col-md-6">
                   <label class="form-label" for="referenceMin">Batas normal minimum</label>
-                  <input class="form-control @error('reference_min') is-invalid @enderror" id="referenceMin" type="number" step="any" name="reference_min" value="{{ old('reference_min', $range?->min_value) }}">
+                  <input class="form-control @error('reference_min') is-invalid @enderror" id="referenceMin" type="number" step="any" name="reference_min" value="{{ old('reference_min', $referenceMin) }}">
                   @error('reference_min')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 </div>
                 <div class="col-md-6">
                   <label class="form-label" for="referenceMax">Batas normal maksimum</label>
-                  <input class="form-control @error('reference_max') is-invalid @enderror" id="referenceMax" type="number" step="any" name="reference_max" value="{{ old('reference_max', $range?->max_value) }}">
+                  <input class="form-control @error('reference_max') is-invalid @enderror" id="referenceMax" type="number" step="any" name="reference_max" value="{{ old('reference_max', $referenceMax) }}">
                   @error('reference_max')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 </div>
               </div>
@@ -176,6 +177,19 @@
 @push('scripts')
   <script>
     (() => {
+      const formatCurrency = (input) => {
+        const digits = input.value.replace(/\D/g, '').replace(/^0+(?=\d)/, '');
+        input.value = digits ? new Intl.NumberFormat('id-ID').format(Number(digits)) : '';
+      };
+      document.querySelectorAll('[data-currency]').forEach((input) => {
+        formatCurrency(input);
+        input.addEventListener('input', () => formatCurrency(input));
+      });
+      document.querySelector('form').addEventListener('submit', () => {
+        document.querySelectorAll('[data-currency]').forEach((input) => {
+          input.value = input.value.replace(/\D/g, '');
+        });
+      });
       const nodeType = document.getElementById('nodeType');
       const headerType = document.getElementById('headerType');
       const resultType = document.getElementById('resultType');

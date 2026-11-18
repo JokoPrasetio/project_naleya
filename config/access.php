@@ -30,6 +30,7 @@ return [
             'label' => 'Master',
             'items' => [
                 ['label' => 'Pemeriksaan', 'icon' => 'bi-diagram-3', 'route' => 'master.examinations.index', 'permission' => 'master.examinations.view'],
+                ['label' => 'Jenis-Pemeriksaan', 'icon' => 'bi-diagram-3', 'route' => 'master.examinations.index', 'permission' => 'master.type_examinations.view'],
             ],
         ],
         [

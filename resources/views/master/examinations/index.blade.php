@@ -9,7 +9,7 @@
       <p>Lihat seluruh layanan atau paket dan buka turunan pemeriksaannya di tabel.</p>
     </div>
     @can('master.examinations.manage')
-      <a class="btn btn-naleya" href="{{ route('master.examinations.create') }}"><i class="bi bi-plus-lg me-1"></i> Tambah node</a>
+      <button class="btn btn-naleya" type="button" data-create-examination><i class="bi bi-plus-lg me-1"></i> Tambah node</button>
     @endcan
   </div>
 
@@ -62,8 +62,23 @@
       </table>
     </div>
   </section>
+  @can('master.examinations.manage')
+    @include('master.examinations.modal')
+  @endcan
 @endsection
 
 @push('scripts')
+  @can('master.examinations.manage')
+    <script>
+      window.examinationModalNodes = {{ Illuminate\Support\Js::from($modalNodes) }};
+      window.examinationModalOld = {{ Illuminate\Support\Js::from([
+        'id' => old('_modal_id'),
+        'normal_values' => old('normal_values', []),
+        'abnormal_values' => old('abnormal_values', []),
+        'additional' => old('additional', []),
+        'hasErrors' => $errors->any() && old('_modal_id') !== null,
+      ]) }};
+    </script>
+  @endcan
   <script src="{{ asset('scripts/pages/master-examinations.js') }}?v={{ filemtime(public_path('scripts/pages/master-examinations.js')) }}"></script>
 @endpush
