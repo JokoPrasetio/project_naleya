@@ -3,6 +3,7 @@
 use App\Http\Controllers\Access\RoleController;
 use App\Http\Controllers\Access\UserController;
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\ExaminationController;
 use App\Http\Controllers\Master\TypeExaminationController;
 use App\Http\Controllers\RegistrationController;
 use Illuminate\Support\Facades\Route;
@@ -33,6 +34,31 @@ Route::middleware('auth')->group(function (): void {
         ->middleware('can:registrations.manage')->name('registrations.store');
 
     Route::prefix('master')->name('master.')->group(function (): void {
+        Route::get('/pemeriksaan/jenis-data', [ExaminationController::class, 'types'])
+            ->middleware('can:master.examinations.view')->name('examinations.types');
+        Route::get('/pemeriksaan/induk-data', [ExaminationController::class, 'parents'])
+            ->middleware('can:master.examinations.view')->name('examinations.parents');
+        Route::get('/pemeriksaan/template', [ExaminationController::class, 'template'])
+            ->middleware('can:master.examinations.manage')->name('examinations.template');
+        Route::post('/pemeriksaan/import', [ExaminationController::class, 'import'])
+            ->middleware('can:master.examinations.manage')->name('examinations.import');
+        Route::post('/pemeriksaan/bulk', [ExaminationController::class, 'bulkStore'])
+            ->middleware('can:master.examinations.manage')->name('examinations.bulk');
+        Route::get('/pemeriksaan/input-banyak', [ExaminationController::class, 'bulkCreate'])
+            ->middleware('can:master.examinations.manage')->name('examinations.bulk-create');
+        Route::get('/pemeriksaan/data', [ExaminationController::class, 'data'])
+            ->middleware('can:master.examinations.view')->name('examinations.data');
+        Route::get('/pemeriksaan/{examination}', [ExaminationController::class, 'show'])
+            ->middleware('can:master.examinations.view')->name('examinations.show');
+        Route::post('/pemeriksaan', [ExaminationController::class, 'store'])
+            ->middleware('can:master.examinations.manage')->name('examinations.store');
+        Route::put('/pemeriksaan/{examination}', [ExaminationController::class, 'update'])
+            ->middleware('can:master.examinations.manage')->name('examinations.update');
+        Route::delete('/pemeriksaan/{examination}', [ExaminationController::class, 'destroy'])
+            ->middleware('can:master.examinations.manage')->name('examinations.destroy');
+        Route::get('/pemeriksaan', [ExaminationController::class, 'index'])
+            ->middleware('can:master.examinations.view')->name('examinations.index');
+
         Route::get('/jenis-pemeriksaan', [TypeExaminationController::class, 'index'])
             ->middleware('can:master.type_examinations.view')->name('type_examinations.index');
         Route::get('/jenis-pemeriksaan/data', [TypeExaminationController::class, 'data'])
@@ -43,7 +69,6 @@ Route::middleware('auth')->group(function (): void {
             ->middleware('can:master.type_examinations.manage')->name('type_examinations.update');
         Route::delete('/jenis-pemeriksaan/{type_examination}', [TypeExaminationController::class, 'destroy'])
             ->middleware('can:master.type_examinations.manage')->name('type_examinations.destroy');
-
 
         Route::get('/pengguna', [UserController::class, 'index'])
             ->middleware('can:master.users.view')->name('users.index');
@@ -56,7 +81,6 @@ Route::middleware('auth')->group(function (): void {
     });
 
     Route::prefix('akses')->name('access.')->group(function (): void {
-
 
         Route::get('/peran', [RoleController::class, 'index'])
             ->middleware('can:access.roles.view')->name('roles.index');

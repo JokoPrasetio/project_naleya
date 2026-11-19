@@ -14,17 +14,17 @@ return new class extends Migration
         Schema::create('examinations', function (Blueprint $table) {
             $table->id();
             $table->string('parent_id');
-            $table->string('code_examination')->nullable();
-            $table->string('type_examination_id');
-            $table->string('name');
-            $table->string('node_type');
-            $table->string('barcode_name');
+            $table->string('code_examination')->nullable(); // kode pemeriksaan
+            $table->string('type_examination_id'); // tipe pemeriksaaan
+            $table->string('name'); // nama pemeriksaan
+            $table->string('node_type'); // header, sub header, item
+            $table->string('barcode_name');  // nama pemeriksaan dibarcode
             $table->boolean('active')->default(true);
-            $table->string('code_machine')->nullable();
-            $table->decimal('price', 14, 2)->nullable();
-            $table->integer('sort_order')->nullable();
-            $table->string('method_examination')->nullable();
-            $table->string('unit')->nullable();
+            $table->string('code_machine')->nullable(); // kode mesin
+            $table->decimal('price', 14, 2)->nullable(); // harga
+            $table->integer('sort_order')->nullable(); // urutan jika item
+            $table->string('method_examination')->nullable(); // metode yang digunakan untuk pemeriksaan
+            $table->string('unit')->nullable(); // satuan unit
             $table->timestamps();
         });
     }

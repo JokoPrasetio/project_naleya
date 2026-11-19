@@ -5,6 +5,8 @@ return [
         'dashboard.view' => 'Lihat dashboard',
         'registrations.view' => 'Lihat pendaftaran',
         'registrations.manage' => 'Kelola pendaftaran',
+        'master.examinations.view' => 'Lihat master pemeriksaan',
+        'master.examinations.manage' => 'Kelola master pemeriksaan',
         'master.type_examinations.view' => 'Lihat master jenis pemeriksaan',
         'master.type_examinations.manage' => 'Kelola master jenis pemeriksaan',
         'master.users.view' => 'Lihat pengguna',
@@ -29,6 +31,7 @@ return [
         [
             'label' => 'Master',
             'items' => [
+                ['label' => 'Pemeriksaan', 'icon' => 'bi-clipboard2-pulse', 'route' => 'master.examinations.index', 'permission' => 'master.examinations.view'],
                 ['label' => 'Pengguna', 'icon' => 'bi-people', 'route' => 'master.users.index', 'permission' => 'master.users.view'],
                 ['label' => 'Jenis-Pemeriksaan', 'icon' => 'bi bi-boxes', 'route' => 'master.type_examinations.index', 'permission' => 'master.type_examinations.view'],
             ],

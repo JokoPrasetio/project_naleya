@@ -13,11 +13,11 @@ return new class extends Migration
     {
         Schema::create('abnormal_examinations', function (Blueprint $table) {
             $table->id();
-            $table->string('examination_id');
+            $table->foreignId('examination_id')->constrained('examinations')->cascadeOnDelete();
             $table->string('classification');
-            $table->string('operator');
+            $table->string('operator'); // > < >= <= == !==
             $table->string('value')->nullable();
-            $table->string('conclusion')->nullable();
+            $table->string('conclusion')->nullable(); // conclusion
             $table->string('suggestion')->nullable();
             $table->string('summary')->nullable();
             $table->timestamps();

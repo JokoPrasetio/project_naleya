@@ -83,6 +83,13 @@
                   </div>
                 </div>
               </div>
+              <div class="col-12">
+                <label class="form-label" for="typeExaminationStatus">Status</label>
+                <select class="form-select" name="status" id="typeExaminationStatus">
+                  <option value="1">Aktif</option>
+                  <option value="0">Nonaktif</option>
+                </select>
+              </div>
             </div>
             <div class="modal-footer">
               <button class="btn btn-outline-secondary" type="button" data-bs-dismiss="modal">Batal</button>

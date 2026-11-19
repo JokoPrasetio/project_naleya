@@ -13,9 +13,10 @@ return new class extends Migration
     {
         Schema::create('normal_examinations', function (Blueprint $table) {
             $table->id();
-            $table->string('classification');
-            $table->string('value')->nullable();
-            $table->string('operator')->nullable();
+            $table->foreignId('examination_id')->constrained('examinations')->cascadeOnDelete();
+            $table->string('classification'); // laki lagi
+            $table->string('value')->nullable(); // nilai normal
+            $table->string('operator')->nullable(); // > < >= <= == !==
             $table->string('unit')->nullable();
             $table->timestamps();
         });
