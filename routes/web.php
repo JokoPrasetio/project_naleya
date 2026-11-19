@@ -3,7 +3,7 @@
 use App\Http\Controllers\Access\RoleController;
 use App\Http\Controllers\Access\UserController;
 use App\Http\Controllers\Auth\LoginController;
-use App\Http\Controllers\Master\ExaminationController;
+use App\Http\Controllers\Master\TypeExaminationController;
 use App\Http\Controllers\RegistrationController;
 use Illuminate\Support\Facades\Route;
 
@@ -33,29 +33,30 @@ Route::middleware('auth')->group(function (): void {
         ->middleware('can:registrations.manage')->name('registrations.store');
 
     Route::prefix('master')->name('master.')->group(function (): void {
-        Route::get('/pemeriksaan', [ExaminationController::class, 'index'])
-            ->middleware('can:master.examinations.view')->name('examinations.index');
-        Route::get('/pemeriksaan/baru', [ExaminationController::class, 'create'])
-            ->middleware('can:master.examinations.manage')->name('examinations.create');
-        Route::post('/pemeriksaan', [ExaminationController::class, 'store'])
-            ->middleware('can:master.examinations.manage')->name('examinations.store');
-        Route::get('/pemeriksaan/{examination}/ubah', [ExaminationController::class, 'edit'])
-            ->middleware('can:master.examinations.manage')->name('examinations.edit');
-        Route::put('/pemeriksaan/{examination}', [ExaminationController::class, 'update'])
-            ->middleware('can:master.examinations.manage')->name('examinations.update');
-        Route::delete('/pemeriksaan/{examination}', [ExaminationController::class, 'destroy'])
-            ->middleware('can:master.examinations.manage')->name('examinations.destroy');
+        Route::get('/jenis-pemeriksaan', [TypeExaminationController::class, 'index'])
+            ->middleware('can:master.type_examinations.view')->name('type_examinations.index');
+        Route::get('/jenis-pemeriksaan/data', [TypeExaminationController::class, 'data'])
+            ->middleware('can:master.type_examinations.view')->name('type_examinations.data');
+        Route::post('/jenis-pemeriksaan', [TypeExaminationController::class, 'store'])
+            ->middleware('can:master.type_examinations.manage')->name('type_examinations.store');
+        Route::put('/jenis-pemeriksaan/{type_examination}', [TypeExaminationController::class, 'update'])
+            ->middleware('can:master.type_examinations.manage')->name('type_examinations.update');
+        Route::delete('/jenis-pemeriksaan/{type_examination}', [TypeExaminationController::class, 'destroy'])
+            ->middleware('can:master.type_examinations.manage')->name('type_examinations.destroy');
+
+
+        Route::get('/pengguna', [UserController::class, 'index'])
+            ->middleware('can:master.users.view')->name('users.index');
+        Route::get('/pengguna/data', [UserController::class, 'data'])
+            ->middleware('can:master.users.view')->name('users.data');
+        Route::post('/pengguna', [UserController::class, 'store'])
+            ->middleware('can:master.users.manage')->name('users.store');
+        Route::put('/pengguna/{user}', [UserController::class, 'update'])
+            ->middleware('can:master.users.manage')->name('users.update');
     });
 
     Route::prefix('akses')->name('access.')->group(function (): void {
-        Route::get('/pengguna', [UserController::class, 'index'])
-            ->middleware('can:access.users.view')->name('users.index');
-        Route::get('/pengguna/data', [UserController::class, 'data'])
-            ->middleware('can:access.users.view')->name('users.data');
-        Route::post('/pengguna', [UserController::class, 'store'])
-            ->middleware('can:access.users.manage')->name('users.store');
-        Route::put('/pengguna/{user}', [UserController::class, 'update'])
-            ->middleware('can:access.users.manage')->name('users.update');
+
 
         Route::get('/peran', [RoleController::class, 'index'])
             ->middleware('can:access.roles.view')->name('roles.index');

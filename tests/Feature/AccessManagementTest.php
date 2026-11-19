@@ -29,16 +29,16 @@ class AccessManagementTest extends TestCase
 
     public function test_guest_and_operator_cannot_read_user_data(): void
     {
-        $this->get(route('access.users.data'))->assertRedirect(route('login'));
+        $this->get(route('master.users.data'))->assertRedirect(route('login'));
         $operator = $this->assigned(Role::factory()->create(['permissions' => ['dashboard.view']]));
-        $this->actingAs($operator)->get(route('access.users.data'))->assertForbidden();
-        $this->get(route('access.users.index'))
+        $this->actingAs($operator)->get(route('master.users.data'))->assertForbidden();
+        $this->get(route('master.users.index'))
             ->assertForbidden()->assertSee('403 · Akses ditolak')->assertSee('Ganti akun');
     }
 
     public function test_administrator_can_open_modal_pages(): void
     {
-        $this->actingAs($this->admin())->get(route('access.users.index'))
+        $this->actingAs($this->admin())->get(route('master.users.index'))
             ->assertOk()->assertSee('Tambah Pengguna')->assertSee('userModal');
         $this->get(route('access.roles.index'))
             ->assertOk()->assertSee('Tambah Peran')->assertSee('roleModal');
@@ -50,23 +50,23 @@ class AccessManagementTest extends TestCase
         $first = Role::factory()->create();
         $second = Role::factory()->create();
 
-        $this->actingAs($actor)->post(route('access.users.store'), [
+        $this->actingAs($actor)->post(route('master.users.store'), [
             'name' => 'Petugas', 'email' => 'petugas@example.test',
             'roles' => [$first->id, $second->id],
             'password' => 'rahasia-panjang-123',
             'password_confirmation' => 'rahasia-panjang-123', 'is_active' => '1',
-        ])->assertRedirect(route('access.users.index'));
+        ])->assertRedirect(route('master.users.index'));
 
         $user = User::query()->where('email', 'petugas@example.test')->firstOrFail();
         $this->assertEqualsCanonicalizing([$first->id, $second->id], $user->roles->pluck('id')->all());
         $this->assertTrue(Hash::check('rahasia-panjang-123', $user->password));
-        $this->get(route('access.users.index'))
+        $this->get(route('master.users.index'))
             ->assertOk()->assertSee('feedbackToast')->assertSee('Pengguna berhasil ditambahkan.');
     }
 
     public function test_invalid_role_is_rejected(): void
     {
-        $this->actingAs($this->admin())->post(route('access.users.store'), [
+        $this->actingAs($this->admin())->post(route('master.users.store'), [
             'name' => 'Petugas', 'email' => 'petugas@example.test',
             'roles' => [999999], 'password' => 'rahasia-panjang-123',
             'password_confirmation' => 'rahasia-panjang-123', 'is_active' => '1',
@@ -81,12 +81,12 @@ class AccessManagementTest extends TestCase
         $second = Role::factory()->create();
         $user = $this->assigned($first);
 
-        $this->actingAs($actor)->put(route('access.users.update', $user), [
+        $this->actingAs($actor)->put(route('master.users.update', $user), [
             'name' => 'Nama Baru',
             'email' => $user->email,
             'roles' => [$first->id, $second->id],
             'is_active' => '1',
-        ])->assertRedirect(route('access.users.index'));
+        ])->assertRedirect(route('master.users.index'));
 
         $this->assertSame('Nama Baru', $user->fresh()->name);
         $this->assertEqualsCanonicalizing([$first->id, $second->id], $user->fresh()->roles->pluck('id')->all());
@@ -101,7 +101,7 @@ class AccessManagementTest extends TestCase
         $this->assigned($operator, ['name' => 'Cici']);
         $this->assigned($cashier, ['name' => 'Dina']);
 
-        $this->actingAs($actor)->getJson(route('access.users.data', [
+        $this->actingAs($actor)->getJson(route('master.users.data', [
             'draw' => '<script>', 'start' => 0, 'length' => 1,
             'role_id' => $operator->id, 'search' => ['value' => 'i'],
             'order' => [['column' => 0, 'dir' => 'desc']],
@@ -116,12 +116,12 @@ class AccessManagementTest extends TestCase
     public function test_multiple_roles_combine_permissions(): void
     {
         $dashboard = Role::factory()->create(['permissions' => ['dashboard.view']]);
-        $users = Role::factory()->create(['permissions' => ['access.users.view']]);
+        $users = Role::factory()->create(['permissions' => ['master.users.view']]);
         $actor = $this->assigned($dashboard);
         $actor->roles()->attach($users);
 
         $this->actingAs($actor)->get(route('dashboard'))->assertOk();
-        $this->get(route('access.users.index'))->assertOk()->assertDontSee('Tambah Pengguna');
+        $this->get(route('master.users.index'))->assertOk()->assertDontSee('Tambah Pengguna');
         $this->get(route('access.roles.index'))->assertForbidden();
     }
 
@@ -129,15 +129,15 @@ class AccessManagementTest extends TestCase
     {
         $admin = $this->admin();
         $adminRole = $admin->roles->first();
-        $managerRole = Role::factory()->create(['permissions' => ['access.users.manage']]);
+        $managerRole = Role::factory()->create(['permissions' => ['master.users.manage']]);
         $manager = $this->assigned($managerRole);
 
-        $this->actingAs($admin)->put(route('access.users.update', $admin), [
+        $this->actingAs($admin)->put(route('master.users.update', $admin), [
             'name' => $admin->name, 'email' => $admin->email,
             'roles' => [$adminRole->id], 'is_active' => '0',
         ])->assertSessionHasErrors('roles');
 
-        $this->actingAs($manager)->put(route('access.users.update', $admin), [
+        $this->actingAs($manager)->put(route('master.users.update', $admin), [
             'name' => $admin->name, 'email' => $admin->email,
             'roles' => [$managerRole->id], 'is_active' => '0',
         ])->assertSessionHasErrors('roles');

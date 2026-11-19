@@ -20,8 +20,8 @@
           @can('dashboard.view')
             <a class="btn btn-naleya" href="{{ route('dashboard') }}"><i class="bi bi-house me-1"></i> Ke dashboard</a>
           @endcan
-          @can('access.users.view')
-            <a class="btn btn-outline-secondary" href="{{ route('access.users.index') }}">Ke halaman pengguna</a>
+          @can('master.users.view')
+            <a class="btn btn-outline-secondary" href="{{ route('master.users.index') }}">Ke halaman pengguna</a>
           @endcan
           <form method="POST" action="{{ route('logout') }}">
             @csrf

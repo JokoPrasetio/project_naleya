@@ -2,9 +2,9 @@
   data-has-errors="{{ $errors->any() ? '1' : '0' }}" data-editing-id="{{ old('editing_user_id') }}" data-bs-backdrop="static" data-bs-keyboard="false">
   <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
     <div class="modal-content access-modal">
-      <form id="userForm" method="POST" action="{{ route('access.users.store') }}"
-        data-store-url="{{ route('access.users.store') }}"
-        data-update-base="{{ route('access.users.index') }}">
+      <form id="userForm" method="POST" action="{{ route('master.users.store') }}"
+        data-store-url="{{ route('master.users.store') }}"
+        data-update-base="{{ route('master.users.index') }}">
         @csrf
         <input id="userFormMethod" type="hidden" name="_method" value="PUT" disabled>
         <input id="editingUserId" type="hidden" name="editing_user_id" value="{{ old('editing_user_id') }}">

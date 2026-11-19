@@ -13,8 +13,8 @@
     <button class="profile-chip profile-button" type="button" data-bs-toggle="dropdown"
       aria-expanded="false">
       <span class="avatar">{{ strtoupper(substr(auth()->user()->name, 0, 2)) }}</span>
+
       
-      <i class="bi bi-chevron-down small"></i>
     </button>
     <div class="dropdown-menu dropdown-menu-end profile-menu">
       <div class="dropdown-header">

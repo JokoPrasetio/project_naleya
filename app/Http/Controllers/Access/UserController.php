@@ -17,7 +17,7 @@ class UserController extends Controller
 {
     public function index(): View
     {
-        return view('access.users.index', [
+        return view('master.users.index', [
             'roles' => Role::query()->orderBy('name')->get(),
         ]);
     }
@@ -93,7 +93,7 @@ class UserController extends Controller
             $user->roles()->sync($data['roles']);
         });
 
-        return redirect()->route('access.users.index')->with('success', 'Pengguna berhasil ditambahkan.');
+        return redirect()->route('master.users.index')->with('success', 'Pengguna berhasil ditambahkan.');
     }
 
     public function update(Request $request, User $user): RedirectResponse
@@ -144,6 +144,6 @@ class UserController extends Controller
             $lockedUser->roles()->sync($newRoleIds);
         });
 
-        return redirect()->route('access.users.index')->with('success', 'Pengguna berhasil diperbarui.');
+        return redirect()->route('master.users.index')->with('success', 'Pengguna berhasil diperbarui.');
     }
 }

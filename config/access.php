@@ -5,10 +5,10 @@ return [
         'dashboard.view' => 'Lihat dashboard',
         'registrations.view' => 'Lihat pendaftaran',
         'registrations.manage' => 'Kelola pendaftaran',
-        'master.examinations.view' => 'Lihat master pemeriksaan',
-        'master.examinations.manage' => 'Kelola master pemeriksaan',
-        'access.users.view' => 'Lihat pengguna',
-        'access.users.manage' => 'Kelola pengguna',
+        'master.type_examinations.view' => 'Lihat master jenis pemeriksaan',
+        'master.type_examinations.manage' => 'Kelola master jenis pemeriksaan',
+        'master.users.view' => 'Lihat pengguna',
+        'master.users.manage' => 'Kelola pengguna',
         'access.roles.view' => 'Lihat peran dan izin',
         'access.roles.manage' => 'Kelola peran dan izin',
     ],
@@ -29,14 +29,13 @@ return [
         [
             'label' => 'Master',
             'items' => [
-                ['label' => 'Pemeriksaan', 'icon' => 'bi-diagram-3', 'route' => 'master.examinations.index', 'permission' => 'master.examinations.view'],
-                ['label' => 'Jenis-Pemeriksaan', 'icon' => 'bi-diagram-3', 'route' => 'master.examinations.index', 'permission' => 'master.type_examinations.view'],
+                ['label' => 'Pengguna', 'icon' => 'bi-people', 'route' => 'master.users.index', 'permission' => 'master.users.view'],
+                ['label' => 'Jenis-Pemeriksaan', 'icon' => 'bi bi-boxes', 'route' => 'master.type_examinations.index', 'permission' => 'master.type_examinations.view'],
             ],
         ],
         [
             'label' => 'Pengaturan',
             'items' => [
-                ['label' => 'Pengguna', 'icon' => 'bi-people', 'route' => 'access.users.index', 'permission' => 'access.users.view'],
                 ['label' => 'Peran & Izin', 'icon' => 'bi-shield-lock', 'route' => 'access.roles.index', 'permission' => 'access.roles.view'],
             ],
         ],
